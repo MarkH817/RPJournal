@@ -1,5 +1,5 @@
 import React from 'react'
-import App, { Container } from 'next/app'
+import App from 'next/app'
 import { ApolloProvider } from 'react-apollo'
 import Router from 'next/router'
 import NProgress from 'nprogress'
@@ -29,13 +29,11 @@ class MyApp extends App {
     const { Component, apollo, pageProps } = this.props
 
     return (
-      <Container>
-        <ApolloProvider client={apollo}>
-          <Page>
-            <Component {...pageProps} />
-          </Page>
-        </ApolloProvider>
-      </Container>
+      <ApolloProvider client={apollo}>
+        <Page>
+          <Component {...pageProps} />
+        </Page>
+      </ApolloProvider>
     )
   }
 }

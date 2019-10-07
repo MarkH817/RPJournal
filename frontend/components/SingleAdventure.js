@@ -9,7 +9,6 @@ import { useUser } from './hooks/useUser'
 import Description from './Description'
 import DetailsMenu from './styles/DetailsMenu'
 import ErrorMessage from './ErrorMessage'
-import Sessions from './Sessions'
 import Title from './Title'
 
 export const SINGLE_ADVENTURE_QUERY = gql`
@@ -96,21 +95,6 @@ export function SingleAdventure (props) {
             </Link>
           )}
           <Description data={adventure.description} />
-        </section>
-
-        <section>
-          <h2>Sessions</h2>
-          {showControls && (
-            <Link
-              href={{
-                pathname: '/new-session',
-                query: { adventureId: adventure.id }
-              }}
-            >
-              <a>+ New Session</a>
-            </Link>
-          )}
-          <Sessions adventureId={props.id} />
         </section>
       </div>
     </StyledAdventure>
