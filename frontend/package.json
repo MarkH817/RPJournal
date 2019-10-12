@@ -62,6 +62,7 @@
     "react": "^16.10.2",
     "react-apollo": "^3.1.2",
     "react-dom": "^16.10.2",
+    "react-hook-form": "^3.23.18",
     "react-timeago": "^4.4.0",
     "styled-components": "^4.4.0",
     "typeface-open-sans": "0.0.75",
