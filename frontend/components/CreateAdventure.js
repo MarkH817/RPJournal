@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useMutation } from 'react-apollo'
 import gql from 'graphql-tag'
 import Router from 'next/router'
+import useForm from 'react-hook-form'
 
 import { CURRENT_USER_QUERY } from './hooks/useUser'
 import Form from './styles/Form'
@@ -18,30 +19,20 @@ export const CREATE_ADVENTURE_MUTATION = gql`
 `
 
 export function CreateAdventure () {
-  const [state, setState] = useState({
-    title: '',
-    description: ''
-  })
+  const { handleSubmit, register, setValue } = useForm()
   const [createAdventure, { loading, error }] = useMutation(
     CREATE_ADVENTURE_MUTATION,
-    {
-      variables: { ...state },
-      refetchQueries: [{ query: CURRENT_USER_QUERY }]
-    }
+    { refetchQueries: [{ query: CURRENT_USER_QUERY }] }
   )
 
-  const handleChange = event => {
-    const { name, value } = event.target
-    setState(prevState => ({ ...prevState, [name]: value }))
-  }
+  /** @param {string} desc */
+  const handleEditor = desc => setValue('description', desc)
 
-  const handleDescription = description =>
-    setState(prevState => ({ ...prevState, description }))
-
-  const create = async event => {
-    event.preventDefault()
-
-    const mutationResult = await createAdventure()
+  /** @param {Record<string, any>} values */
+  const onSubmit = async values => {
+    const mutationResult = await createAdventure({
+      variables: { ...values }
+    })
 
     if (
       mutationResult &&
@@ -55,14 +46,15 @@ export function CreateAdventure () {
     }
   }
 
-  const { title } = state
+  // Manually register Editor
+  register({ name: 'description' }, { required: true })
 
   return (
     <div>
       <Title title='New Adventure' />
       <h1>Create New Adventure</h1>
 
-      <Form method='post' onSubmit={create}>
+      <Form method='post' onSubmit={handleSubmit(onSubmit)}>
         <ErrorMessage error={error} />
         <fieldset aria-busy={loading} disabled={loading}>
           <label htmlFor='title'>
@@ -71,15 +63,13 @@ export function CreateAdventure () {
               id='title'
               type='text'
               name='title'
-              value={title}
-              onChange={handleChange}
-              required
+              ref={register({ required: true })}
             />
           </label>
 
           <div className='description'>
             Description
-            <Editor onSave={handleDescription} />
+            <Editor onSave={handleEditor} />
           </div>
 
           <input type='submit' value='Create Adventure' />

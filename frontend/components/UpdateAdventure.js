@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useQuery, useMutation } from 'react-apollo'
 import gql from 'graphql-tag'
 import Router from 'next/router'
+import useForm from 'react-hook-form'
 
 import { CURRENT_USER_QUERY } from './hooks/useUser'
+import { objectExtract } from '../lib/utils'
 import Form from './styles/Form'
 import Editor from './Editor'
 import ErrorMessage from './ErrorMessage'
@@ -28,21 +30,39 @@ export const UPDATE_ADVENTURE_MUTATION = gql`
  */
 export function UpdateAdventure (props) {
   const { id } = props
-
-  const [state, setState] = useState({})
+  const { formState, handleSubmit, register, setValue } = useForm()
   const { loading, error, data } = useQuery(SINGLE_ADVENTURE_QUERY, {
     variables: { id }
   })
   const [updateAdventure, updateResult] = useMutation(
     UPDATE_ADVENTURE_MUTATION,
     {
-      variables: { id, ...state },
       refetchQueries: [
         { query: SINGLE_ADVENTURE_QUERY, variables: { id } },
         { query: CURRENT_USER_QUERY }
       ]
     }
   )
+
+  /** @param {string} desc */
+  const handleEditor = desc => setValue('description', desc)
+
+  /** @param {Record<string, any>} values */
+  const onSubmit = async values => {
+    const changedValues = objectExtract(values, formState.touched)
+
+    const mutationResult = await updateAdventure({
+      variables: { id, ...changedValues }
+    })
+
+    if (
+      mutationResult &&
+      mutationResult.data &&
+      mutationResult.data.updateAdventure
+    ) {
+      await Router.push({ pathname: '/adventure', query: { id } })
+    }
+  }
 
   if (loading) {
     return <p>Loading...</p>
@@ -55,36 +75,15 @@ export function UpdateAdventure (props) {
   /** @type {AdventureModel} */
   const adventure = data.adventure
 
-  const handleChange = event => {
-    const { name, value } = event.target
-    setState(prevState => ({ ...prevState, [name]: value }))
-  }
-
-  const descriptionChange = description =>
-    setState(prevState => ({ ...prevState, description }))
-
-  const save = async event => {
-    event.preventDefault()
-
-    const mutationResult = await updateAdventure()
-
-    if (
-      mutationResult &&
-      mutationResult.data &&
-      mutationResult.data.updateAdventure
-    ) {
-      await Router.push({ pathname: '/adventure', query: { id } })
-    }
-  }
+  // Manually register Editor
+  register({ name: 'description' }, { required: true })
 
   return (
     <div>
       <Title title='Update Adventure' />
-      <header>
-        <h1>Updating - {adventure.title}</h1>
-      </header>
+      <h1>Updating - {adventure.title}</h1>
 
-      <Form method='post' onSubmit={save}>
+      <Form method='post' onSubmit={handleSubmit(onSubmit)}>
         <ErrorMessage error={updateResult.error} />
         <fieldset
           aria-busy={updateResult.loading}
@@ -96,18 +95,15 @@ export function UpdateAdventure (props) {
               id='title'
               type='text'
               name='title'
+              ref={register({ required: true })}
               defaultValue={adventure.title}
-              onChange={handleChange}
               required
             />
           </label>
 
           <div className='description'>
             Description
-            <Editor
-              initialText={adventure.description}
-              onSave={descriptionChange}
-            />
+            <Editor initialText={adventure.description} onSave={handleEditor} />
           </div>
 
           <input type='submit' value='Update Adventure' />
